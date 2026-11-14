@@ -10,7 +10,8 @@
     "start": "node src/server.js",
     "worker": "node src/worker.js",
     "test": "node --test --test-concurrency=1 test/*.test.js",
-    "loadtest": "node scripts/loadtest.js"
+    "loadtest": "node scripts/loadtest.js",
+    "setup": "node scripts/migrate.js && node scripts/seed.js"
   },
   "engines": {
     "node": ">=20"

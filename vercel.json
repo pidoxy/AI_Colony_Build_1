@@ -1,0 +1,21 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "functions": { "api/index.js": { "maxDuration": 30 } },
+  "rewrites": [
+    { "source": "/health", "destination": "/api" },
+    { "source": "/cron/:path*", "destination": "/api" },
+    { "source": "/policy/:path*", "destination": "/api" },
+    { "source": "/dev/:path*", "destination": "/api" },
+    { "source": "/session", "destination": "/api" },
+    { "source": "/rooms/:path*", "destination": "/api" },
+    { "source": "/me/:path*", "destination": "/api" },
+    { "source": "/bookings", "destination": "/api" },
+    { "source": "/bookings/:path*", "destination": "/api" },
+    { "source": "/buildings", "destination": "/api" },
+    { "source": "/amenities", "destination": "/api" },
+    { "source": "/purposes", "destination": "/api" },
+    { "source": "/announcements", "destination": "/api" },
+    { "source": "/admin/:path*", "destination": "/api" }
+  ],
+  "crons": [{ "path": "/cron/daily", "schedule": "0 2 * * *" }]
+}

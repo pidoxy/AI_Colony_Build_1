@@ -5,7 +5,7 @@ import { unavailable, isConnectionError } from './errors.js';
 // Return timestamptz as Date (default) and int8 as number (counts are small).
 pg.types.setTypeParser(20, (v) => Number(v));
 
-export let primary = new pg.Pool({ connectionString: config.databaseUrl, max: 20, connectionTimeoutMillis: 3000 });
+export let primary = new pg.Pool({ connectionString: config.databaseUrl, max: config.poolMax, connectionTimeoutMillis: 5000 });
 export let replica = config.replicaUrl
   ? new pg.Pool({ connectionString: config.replicaUrl, max: 20, connectionTimeoutMillis: 3000 })
   : primary;
@@ -16,7 +16,7 @@ replica.on('error', () => {});
 export async function useDatabase(url) {
   await primary.end().catch(() => {});
   if (replica !== primary) await replica.end().catch(() => {});
-  primary = new pg.Pool({ connectionString: url, max: 20, connectionTimeoutMillis: 3000 });
+  primary = new pg.Pool({ connectionString: url, max: config.poolMax, connectionTimeoutMillis: 5000 });
   primary.on('error', () => {});
   replica = primary;
 }

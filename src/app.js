@@ -5,6 +5,9 @@ import { ApiError, isConnectionError } from './errors.js';
 import { router as student } from './routes/student.js';
 import { router as admin } from './routes/admin.js';
 import { primaryUp } from './db.js';
+import { router as cron } from './routes/cron.js';
+import { config } from './config.js';
+import { maybeSweep } from './jobs.js';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 
@@ -20,6 +23,10 @@ export function createApp() {
 
   app.get('/health', async (_req, res) => res.json({ ok: true, primary: await primaryUp() }));
   app.use(express.static(path.join(here, '..', 'public'), { extensions: ['html'] }));
+  app.use('/cron', cron);
+  if (config.sweepOnRequest) {
+    app.use(['/rooms', '/me', '/bookings', '/session', '/announcements'], async (_req, _res, next) => { await maybeSweep(); next(); });
+  }
   app.use('/admin', admin);
   app.use('/', student);
 

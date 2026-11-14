@@ -50,3 +50,30 @@ Every limit and window (grid, durations, horizon, weekly limit, reminder lead, c
 - Email is not integrated (decision D4 in SPEC.md). Notifications are in-app. Push stays off until a provider is wired in `src/providers.js`; `email_enabled` and `push_enabled` are policy switches.
 - The first super admin and every invited admin sign in with the default temporary password and must set their own. A shared default is guessable until changed: hand out accounts only when the person is ready to log in.
 - Student sign-in is the university SSO in production. `/dev/sso/login` is a development stand-in.
+
+## Deploy a demo on Vercel
+
+The whole app runs as one Vercel function (`api/index.js`); `public/` is served as static files. There is no always-on worker on Vercel, so the time-driven jobs run two ways: a throttled sweep during normal requests (`SWEEP_ON_REQUEST`, on automatically on Vercel), plus a daily cron (`/cron/daily`) for retention and the overlap check. `/cron/tick` runs the every-minute work and can be pinged by any scheduler (Vercel Pro cron, GitHub Actions, cron-job.org).
+
+1. **Create a hosted Postgres 16** (Neon, Supabase, etc.). Use the pooled connection string, with `?sslmode=require`. `btree_gist` must be available (it is on Neon and Supabase).
+2. **Load the schema and seed from your machine:**
+   ```bash
+   DATABASE_URL='postgres://…' npm run setup
+   ```
+   This applies `db/schema.sql` and seeds 300 rooms, purposes, policy and the super admin (`superadmin@university.test`, temporary password `admin`). **Sign in to `/admin.html` straight away and set your own password**: until you do, the default is guessable by anyone who finds the URL.
+3. **Set these environment variables in the Vercel project** (Settings, Environment Variables):
+
+   | Variable | Value |
+   |---|---|
+   | `DATABASE_URL` | the pooled Postgres URL |
+   | `DEMO_MODE` | `1` (enables the mock student sign-in; no real SSO) |
+   | `DEV_SSO_SECRET` | a long random string |
+   | `ADMIN_SESSION_SECRET` | a different long random string |
+   | `RETENTION_HASH_SALT` | another random string |
+   | `CRON_SECRET` | another random string (Vercel sends it to the cron route automatically) |
+   | `BOOTSTRAP_SUPER_ADMIN_EMAIL` | optional: only read by `npm run setup` |
+
+   Optional: `CAMPUS_TZ`, `PG_POOL_MAX` (defaults to 3 on Vercel).
+4. **Deploy** (push to GitHub; Vercel builds with no build step). Check `https://<your-app>.vercel.app/health`: it should say `{"ok":true,"primary":true}`.
+
+Notes: on Vercel's free plan a cron may run at most once a day, which is why `vercel.json` only schedules the daily job. With demo mode on, anyone can sign in as any student, so treat the data as disposable. For real use, drop `DEMO_MODE` and set `SSO_JWKS_URL` instead.

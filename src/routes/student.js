@@ -23,6 +23,7 @@ router.get('/policy/public', async (_req, res) => {
     search_staleness_seconds: p.search_staleness_seconds, university_email_domain: p.university_email_domain,
     noshow_threshold: p.noshow_threshold, noshow_window_days: p.noshow_window_days, suspension_length_days: p.suspension_length_days,
     dev_sso: !!config.sso.devSecret,
+    demo: config.demo,
     sso_login_url: process.env.SSO_LOGIN_URL || null,
   });
 });

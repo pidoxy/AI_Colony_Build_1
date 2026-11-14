@@ -191,3 +191,15 @@ export async function runAll(now = clock.now()) {
     outbox: await sendDue(now),
   };
 }
+
+let lastSweep = 0;
+/**
+ * Serverless has no always-on worker. During normal requests, run the time-driven jobs
+ * at most once per interval. Safe under concurrency (rows are claimed with SKIP LOCKED).
+ */
+export async function maybeSweep(intervalMs = 20000) {
+  const nowMs = Date.now();
+  if (nowMs - lastSweep < intervalMs) return;
+  lastSweep = nowMs;
+  try { await runAll(); } catch { /* the database is down: bookings fail loudly on their own */ }
+}

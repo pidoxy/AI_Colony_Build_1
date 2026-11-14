@@ -1,7 +1,17 @@
 const prod = process.env.NODE_ENV === 'production';
+const onVercel = !!process.env.VERCEL;
+// DEMO_MODE=1 turns on the mock sign-in even in production (public demos only).
+const demo = process.env.DEMO_MODE === '1';
 
 export const config = {
   production: prod,
+  demo,
+  onVercel,
+  // serverless instances should hold few connections; use a pooled connection string
+  poolMax: Number(process.env.PG_POOL_MAX || (onVercel ? 3 : 20)),
+  cronSecret: process.env.CRON_SECRET || null,
+  // no always-on worker on serverless: run the sweeps opportunistically during requests
+  sweepOnRequest: process.env.SWEEP_ON_REQUEST === '1' || onVercel,
   port: Number(process.env.PORT || 3000),
   databaseUrl: process.env.DATABASE_URL || 'postgres://campus@127.0.0.1:5440/campus_rooms',
   // Optional read replica. Falls back to the primary when unset.
@@ -25,7 +35,8 @@ export const config = {
 };
 
 if (prod) {
-  if (!config.sso.jwksUrl) throw new Error('SSO_JWKS_URL is required in production');
+  if (!config.sso.jwksUrl && !demo) throw new Error('SSO_JWKS_URL is required in production (or set DEMO_MODE=1 for a demo)');
+  if (demo && !config.sso.jwksUrl && !config.sso.devSecret) throw new Error('DEV_SSO_SECRET is required when DEMO_MODE=1');
   if (!config.retentionSalt) throw new Error('RETENTION_HASH_SALT is required in production');
   if (!config.adminSecret) throw new Error('ADMIN_SESSION_SECRET is required in production');
 }

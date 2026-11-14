@@ -69,6 +69,7 @@ function bannersHtml() {
   for (const a of state.announcements) {
     parts.push(html`<div class="top-banner"><div class="wrap">${icons.info}<span><b>Planned downtime</b> · ${T.longDate(new Date(a.starts_at))}, ${T.range(a.starts_at, a.ends_at)} ${T.TZ_LABEL}. ${a.message}</span></div></div>`);
   }
+  if (state.cfg?.demo) parts.push(html`<div class="top-banner paused"><div class="wrap">${icons.info}<span><b>Demo.</b> Data here is for trying the app and may be reset. Real university sign-in is not connected.</span></div></div>`);
   if (state.paused) parts.push(html`<div class="top-banner paused"><div class="wrap">${icons.info}<span><b>Booking paused.</b> You can still search. Booking, cancelling and check-in will be back shortly.</span></div></div>`);
   void now;
   return parts;
@@ -214,9 +215,9 @@ function pageLogin() {
   const c = state.cfg;
   const ret = sessionStorage.getItem('cr_return') || '#/rooms';
   shell(html`<div class="wrap"><div class="card">
-    <div class="eyebrow">University sign-in</div><h1 class="h2">Sign in to book a room.</h1>
+    <div class="eyebrow">${c.demo ? 'Demo sign-in' : 'University sign-in'}</div><h1 class="h2">Sign in to book a room.</h1>
     ${c.sso_login_url ? html`<p class="muted">You’ll sign in with your university account.</p><a class="btn btn-primary btn-block" href="${c.sso_login_url}">Continue to university sign-in ${icons.arrow}</a>` : ''}
-    ${c.dev_sso ? html`<p class="muted small" style="margin-top:16px">Development sign-in. Stands in for the university SSO, which issues the signed token in production.</p>
+    ${c.dev_sso ? html`<p class="muted small" style="margin-top:16px">${c.demo ? html`<b>Demo sign-in.</b> Enter any ID and name. Use an email ending <b>@${c.university_email_domain}</b> so invitations to other demo users work. No password.` : 'Development sign-in. Stands in for the university SSO, which issues the signed token in production.'}</p>
       <form id="devlogin" novalidate>
         <div class="field"><label for="sid">Student ID</label><input id="sid" class="inp" autocomplete="username" value="${localStorage.getItem('cr_dev_sid') || ''}" required></div>
         <div class="field"><label for="snm">Name</label><input id="snm" class="inp" autocomplete="name" value="${localStorage.getItem('cr_dev_name') || ''}" required></div>
